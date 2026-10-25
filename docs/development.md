@@ -21,6 +21,18 @@ npm start              # serve the production build with Next
 
 `npm run desktop:dist` is the local **signed macOS** packaging path, not a portable unsigned shortcut. Prerequisites and Windows/Linux instructions are in [Desktop builds and releases](desktop-release.md).
 
+### Nix (browser mode, Linux)
+
+`flake.nix` packages the standalone server without Electron:
+
+```bash
+nix run github:amosblomqvist/learnharness   # or `nix run .` in a checkout
+nix flake check                             # boots the server, fetches / and a static chunk
+nix develop                                 # shell with the pinned Node
+```
+
+`learnharness-server` binds `127.0.0.1:3000` (browser mode has no API auth; override with `LH_HOST` / `PORT`) and stores data under `$XDG_DATA_HOME/learnharness/` unless `LH_DATA_DIR` / `LH_AUTH_FILE` are set. The build swaps `next/font/google` for the woff2 files vendored in `nix/fonts/` so it needs no network, and runs `scripts/build-server.mjs` for the static copy and leak guards. After changing `package-lock.json`, update `npmDepsHash` in `flake.nix` (set it to `lib.fakeHash`, build, and copy the hash from the error).
+
 ## Configuration
 
 Nonsecret settings are deltas in `<data root>/settings.json`; absent values resolve through `src/core/settings.ts` and `settings-resolution.ts`. Models and role overrides are settings, not environment variables. [Prompt overrides](../src/agent/prompts/README.md) live under `<data root>/prompts/` and require explicit enable switches.

@@ -19,3 +19,7 @@ xai-credentials.json*
 
 # dev-fresh launcher scratch (fresh-user sim): disposable per launch
 .fresh-data/
+
+# nix build output
+result
+result-*

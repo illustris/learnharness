@@ -34,6 +34,18 @@ npx tsx --env-file=.env.local scripts/replay-layout.ts        # re-derive layout
 
 For Windows/Linux packages and the three-OS CI/release flow, see [`desktop-release.md`](desktop-release.md). Native renderer binaries are traced per platform, so release builds run on the target OS, not as cross-builds from macOS.
 
+### Nix (browser mode, Linux)
+
+`flake.nix` packages the standalone server without Electron:
+
+```bash
+nix run github:amosblomqvist/learnharness   # or `nix run .` in a checkout
+nix flake check                             # boots the server, fetches / and a static chunk
+nix develop                                 # shell with the pinned Node
+```
+
+`learnharness-server` binds `127.0.0.1:3000` (browser mode has no API auth; override with `LH_HOST` / `PORT`) and stores data under `$XDG_DATA_HOME/learnharness/` unless `LH_DATA_DIR` / `LH_AUTH_FILE` are set. The build swaps `next/font/google` for the woff2 files vendored in `nix/fonts/` so it needs no network, and runs `scripts/build-server.mjs` for the static copy and leak guards. After changing `package-lock.json`, update `npmDepsHash` in `flake.nix` (set it to `lib.fakeHash`, build, and copy the hash from the error).
+
 ## Environment (`.env.local`)
 
 Secrets and machine-specific paths only. Model choice and thinking budgets are the user's, not the environment's — BYOK model slots live in **settings** (`models` section: strong/cheap/vision, provider + model id + optional thinking level; per-role and per-chat overrides ride on top). The extraction batch threshold is a settings knob too (`graph.extractionChunkTokens`, default 4096, floor 500).

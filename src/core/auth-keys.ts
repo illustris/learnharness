@@ -122,10 +122,22 @@ export const AUTH_PROVIDER_KEYS: readonly AuthProviderInfo[] = [
 	{ id: "zai-coding-cn", envVar: "ZAI_CODING_CN_API_KEY", label: "Z.AI Coding CN" },
 ] as const;
 
+/** Model providers the APP registers on top of pi-ai's builtins (kept out
+ *  of AUTH_PROVIDER_KEYS so its no-drift pin stays exact). LiteLLM is an
+ *  OpenAI-compatible proxy whose address comes from LITELLM_BASE_URL — see
+ *  src/agent/litellm.ts. */
+export const APP_PROVIDER_KEYS: readonly AuthProviderInfo[] = [
+	{ id: "litellm", envVar: "LITELLM_API_KEY", label: "LiteLLM" },
+] as const;
+
+/** Every plain-key model provider the app can run: pi-ai's table plus the
+ *  app-registered ones. Consumers read this, not AUTH_PROVIDER_KEYS. */
+export const MODEL_PROVIDER_KEYS: readonly AuthProviderInfo[] = [...AUTH_PROVIDER_KEYS, ...APP_PROVIDER_KEYS];
+
 /** Every distinct env var a model-provider key rides in (the write side's
  *  writability check — see isProviderEnvVar below; also drives which
  *  PRESENT provider vars surface as status rows). */
-export const AUTH_PROVIDER_ENV_VARS: ReadonlySet<string> = new Set(AUTH_PROVIDER_KEYS.map((p) => p.envVar));
+export const AUTH_PROVIDER_ENV_VARS: ReadonlySet<string> = new Set(MODEL_PROVIDER_KEYS.map((p) => p.envVar));
 
 /** Is this env-var name the key of SOME pi-ai model provider? */
 export function isProviderEnvVar(envVar: string): boolean {

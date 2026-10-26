@@ -44,7 +44,11 @@ nix flake check                             # boots the server, fetches / and a 
 nix develop                                 # shell with the pinned Node
 ```
 
-`learnharness-server` binds `127.0.0.1:3000` (browser mode has no API auth; override with `LH_HOST` / `PORT`) and stores data under `$XDG_DATA_HOME/learnharness/` unless `LH_DATA_DIR` / `LH_AUTH_FILE` are set. The build swaps `next/font/google` for the woff2 files vendored in `nix/fonts/` so it needs no network, and runs `scripts/build-server.mjs` for the static copy and leak guards. After changing `package-lock.json`, update `npmDepsHash` in `flake.nix` (set it to `lib.fakeHash`, build, and copy the hash from the error).
+`learnharness-server` binds `127.0.0.1:3000` (browser mode has no API auth; override with `LH_HOST` / `PORT`) and stores data under `$XDG_DATA_HOME/learnharness/` unless `LH_DATA_DIR` / `LH_AUTH_FILE` are set. The build swaps `next/font/google` for the woff2 files vendored in `nix/fonts/` so it needs no network, and runs `scripts/build-server.mjs` for the static copy and leak guards. The launcher also accepts `LITELLM_API_KEY_FILE` in place of `LITELLM_API_KEY` (see LiteLLM below). After changing `package-lock.json`, update `npmDepsHash` in `flake.nix` (set it to `lib.fakeHash`, build, and copy the hash from the error). `next build` peaks around 2.5 GB of RAM; on small machines, avoid running other heavy jobs alongside it.
+
+### LiteLLM
+
+`src/agent/litellm.ts` registers a `litellm` provider when `LITELLM_BASE_URL` is set (e.g. `https://litellm.example.com`; `/v1` is optional). The key is `LITELLM_API_KEY`, from the env or Settings → Keys. The catalog is fetched from the proxy's `/v1/model/info` at boot, on `/api/models` and before turns (cached for 5 minutes): chat/responses-mode entries become models, with context limits, vision/reasoning flags and per-token prices as configured in LiteLLM, so the cost meter reports the proxy's prices. Every model is called through `/v1/chat/completions`. The provider's key row lives in `APP_PROVIDER_KEYS` (`src/core/auth-keys.ts`), outside the pi-ai-pinned `AUTH_PROVIDER_KEYS`.
 
 ## Environment (`.env.local`)
 

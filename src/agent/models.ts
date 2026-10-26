@@ -22,6 +22,7 @@ import { createClaudeCodeProvider } from "./claude-code/provider.ts";
 import { streamClaudeCode } from "./claude-code/stream.ts";
 import { nativeSubscriptionId, nativeSubscriptionModel } from "./subscription-bridge.ts";
 import { nativeSubscriptionStream } from "./subscription-stream.ts";
+import { liteLLMProvider, refreshLiteLLMModels } from "./litellm.ts";
 
 /** App identity is immutable and shared by Models and every native Agent.
  * Agent's default Pi attribution otherwise overrides the Models identity. */
@@ -92,6 +93,14 @@ export function piModels() {
 				: provider);
 		}
 		collection.setProvider(createClaudeCodeProvider(streamClaudeCode));
+		// App-registered providers (LiteLLM when LITELLM_BASE_URL is set). Its
+		// catalog is fetched from the proxy; start that now so background jobs
+		// that run before the first /api/models call can resolve their models.
+		const litellm = liteLLMProvider();
+		if (litellm) {
+			collection.setProvider(litellm);
+			void refreshLiteLLMModels(collection);
+		}
 	}
 	providerSource?.sync(collection);
 	return collection;

@@ -35,6 +35,7 @@
 								"flake.nix"
 								"flake.lock"
 								"learnharness-server.sh"
+								"learnharness-shutdown.cjs"
 							]);
 						name = "learnharness-source";
 					};
@@ -102,6 +103,7 @@
 						substitute ${./learnharness-server.sh} $out/bin/learnharness-server \
 							--replace-fail '@node@' '${pkgs.nodejs_26}/bin/node' \
 							--replace-fail '@app@' '${app}/lib/learnharness' \
+							--replace-fail '@shutdown@' '${./learnharness-shutdown.cjs}' \
 							--replace-fail '@chromium@' '${pkgs.chromium}/bin/chromium'
 						chmod +x $out/bin/learnharness-server
 					'';

@@ -22,4 +22,4 @@ fi
 export CHROME_PATH="${CHROME_PATH:-@chromium@}"
 mkdir -p "$LH_DATA_DIR" "$(dirname "$LH_AUTH_FILE")"
 echo "LearnHarness: http://$HOSTNAME:$PORT (data: $LH_DATA_DIR)" >&2
-exec @node@ @app@/server.js "$@"
+exec @node@ --require @shutdown@ @app@/server.js "$@"

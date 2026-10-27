@@ -17,6 +17,9 @@ if [ -z "$LITELLM_API_KEY" ] && [ -n "$LITELLM_API_KEY_FILE" ]; then
 	LITELLM_API_KEY="$(tr -d '[:space:]' < "$LITELLM_API_KEY_FILE")" || exit 1
 	export LITELLM_API_KEY
 fi
+# Headless renders (figures, demo verification) use puppeteer, which in
+# browser mode needs a Chrome; default to the packaged Chromium.
+export CHROME_PATH="${CHROME_PATH:-@chromium@}"
 mkdir -p "$LH_DATA_DIR" "$(dirname "$LH_AUTH_FILE")"
 echo "LearnHarness: http://$HOSTNAME:$PORT (data: $LH_DATA_DIR)" >&2
-exec @node@ @out@/lib/learnharness/server.js "$@"
+exec @node@ @app@/server.js "$@"

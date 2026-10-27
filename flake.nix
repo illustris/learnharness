@@ -18,7 +18,7 @@
 			mkPackage =
 				pkgs:
 				pkgs.buildNpmPackage {
-					pname = "learnharness";
+					pname = "learnharness-unwrapped";
 					inherit version;
 
 					# Keep build outputs and nix-only files out of the source so
@@ -74,28 +74,43 @@
 						mkdir -p $out/lib/learnharness
 						cp -r .next/standalone/. $out/lib/learnharness/
 
-						mkdir -p $out/bin
-						substitute ${./learnharness-server.sh} $out/bin/learnharness-server \
-							--replace-fail '@node@' '${pkgs.nodejs_26}/bin/node' \
-							--replace-fail '@out@' "$out"
-						chmod +x $out/bin/learnharness-server
-
 						runHook postInstall
 					'';
 
 					meta = {
-						description = "An agent harness for learning: adaptive teaching, practice, and a persistent knowledge graph";
+						description = "LearnHarness standalone Next server tree (unwrapped)";
 						homepage = "https://github.com/amosblomqvist/learnharness";
 						license = pkgs.lib.licenses.agpl3Only;
-						mainProgram = "learnharness-server";
 						platforms = systems;
 					};
 				};
+
+			# The launcher is a separate derivation so changing it (or its
+			# runtime deps) never re-runs next build.
+			mkLauncher =
+				pkgs: app:
+				pkgs.runCommand "learnharness-${version}"
+					{
+						passthru.unwrapped = app;
+						meta = app.meta // {
+							description = "An agent harness for learning: adaptive teaching, practice, and a persistent knowledge graph";
+							mainProgram = "learnharness-server";
+						};
+					}
+					''
+						mkdir -p $out/bin
+						substitute ${./learnharness-server.sh} $out/bin/learnharness-server \
+							--replace-fail '@node@' '${pkgs.nodejs_26}/bin/node' \
+							--replace-fail '@app@' '${app}/lib/learnharness' \
+							--replace-fail '@chromium@' '${pkgs.chromium}/bin/chromium'
+						chmod +x $out/bin/learnharness-server
+					'';
 		in
 		{
 			packages = forEachSystem (system: {
 				default = self.packages.${system}.learnharness;
-				learnharness = mkPackage pkgsFor.${system};
+				learnharness-unwrapped = mkPackage pkgsFor.${system};
+				learnharness = mkLauncher pkgsFor.${system} self.packages.${system}.learnharness-unwrapped;
 			});
 
 			devShells = forEachSystem (system: {

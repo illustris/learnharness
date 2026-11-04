@@ -41,7 +41,7 @@
 					};
 
 					nodejs = pkgs.nodejs_26;
-					npmDepsHash = "sha256-Sc41l0dUM/R6LV8/DNbbSsgq6gKB4nI2Utf5vqvY84M=";
+					npmDepsHash = "sha256-+OlIwC9UD7T15Z03IJjF2cNt9wk0/kqcBbviylWdRIA=";
 					npmFlags = [ "--ignore-scripts" ];
 
 					env.NEXT_TELEMETRY_DISABLED = "1";

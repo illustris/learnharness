@@ -697,21 +697,30 @@ export class SessionModel {
 		// write-ahead will persist (inputAppends), with LOCAL ids so
 		// adoption can tell them from the record's absorbed copies.
 		const optimistic: LhMessage[] = [];
-		if (input.type === "text") optimistic.push({ ...newUserMessage(input.text), id: localId() });
-		else if (input.type === "thinking") {
-			// The practice submissions (2026-10-04): the marker lands
-			// optimistically — the card renders from its details the
-			// moment the button fires.
-			optimistic.push({ ...newThinkingMessage(input.problemCallId, input.text), id: localId() });
-		} else if (input.type === "next") {
-			// The move-on signal (owner round 16): the NEXT PROBLEM line
-			// renders the instant the chip/Enter fires.
-			optimistic.push({ ...newNextMessage(), id: localId() });
-		} else if (input.type === "answer") {
-			const tool = pendingCallTool([...this.base, ...this.tail], input.toolCallId) ?? "quiz";
-			const result = { ...newAnswerResult(input.toolCallId, tool, input.answer), id: localId() };
-			optimistic.push(result);
-			this.unconfirmedAnswers.set(result.id, expectedKey ?? input.toolCallId);
+		try {
+			if (input.type === "text") optimistic.push({ ...newUserMessage(input.text), id: localId() });
+			else if (input.type === "thinking") {
+				// The practice submissions (2026-10-04): the marker lands
+				// optimistically — the card renders from its details the
+				// moment the button fires.
+				optimistic.push({ ...newThinkingMessage(input.problemCallId, input.text), id: localId() });
+			} else if (input.type === "next") {
+				// The move-on signal (owner round 16): the NEXT PROBLEM line
+				// renders the instant the chip/Enter fires.
+				optimistic.push({ ...newNextMessage(), id: localId() });
+			} else if (input.type === "answer") {
+				const tool = pendingCallTool([...this.base, ...this.tail], input.toolCallId) ?? "quiz";
+				const result = { ...newAnswerResult(input.toolCallId, tool, input.answer), id: localId() };
+				optimistic.push(result);
+				this.unconfirmedAnswers.set(result.id, expectedKey ?? input.toolCallId);
+			}
+		} catch (err) {
+			// Status is already "submitted": a throw here (nothing was POSTed)
+			// must surface, not leave the view thinking forever.
+			if (this.consumeAbort !== controller) return false;
+			this.setError((err as Error).message);
+			this.setStatus("error");
+			return false;
 		}
 		if (optimistic.length > 0) this.mutate(() => {
 			this.tail = [...this.tail, ...optimistic];
